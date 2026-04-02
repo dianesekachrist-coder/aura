@@ -1,201 +1,123 @@
-// ignore_for_file: deprecated_member_use
-
+// lib/widgets/mini_player.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:on_audio_query/on_audio_query.dart';
-
-import '../core/theme.dart';
-import '../providers/audio_provider.dart';
-import '../screens/player_screen.dart';
+import '../providers/player_provider.dart';
+import '../screens/now_playing_screen.dart';
+import '../theme/app_theme.dart';
+import 'album_art.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
-    final song = audio.currentSong;
+    final player = context.watch<PlayerProvider>();
+    final song = player.currentSong;
     if (song == null) return const SizedBox.shrink();
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
+      onTap: () => Navigator.of(context).push(
         PageRouteBuilder(
-          pageBuilder: (_, a1, a2) => const PlayerScreen(),
-          transitionsBuilder: (_, a1, __, child) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 1),
-                end: Offset.zero,
-              ).animate(
-                  CurvedAnimation(parent: a1, curve: Curves.easeOutCubic)),
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 380),
+          pageBuilder: (_, a, __) => const NowPlayingScreen(),
+          transitionsBuilder: (_, animation, __, child) => SlideTransition(
+            position:
+                Tween(begin: const Offset(0, 1), end: Offset.zero).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+            child: child,
+          ),
         ),
       ),
       child: Container(
-        height: 70,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AuraTheme.surfaceElevated,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AuraTheme.divider, width: 1),
+          color: AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.teal.withOpacity(0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.4),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Progress line
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _ProgressLine(audio: audio),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress line
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: player.progress,
+                backgroundColor: AppTheme.textSub.withOpacity(0.2),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.teal),
+                minHeight: 2,
               ),
-
-              // Content
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    // Album art with Hero
-                    Hero(
-                      tag: 'album_art_${song.id}',
-                      child: Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: AuraTheme.surfaceCard,
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: QueryArtworkWidget(
-                          id: int.tryParse(song.id) ?? 0,
-                          type: ArtworkType.AUDIO,
-                          artworkBorder: BorderRadius.circular(12),
-                          artworkWidth: 46,
-                          artworkHeight: 46,
-                          nullArtworkWidget: const Icon(
-                            Icons.music_note_rounded,
-                            color: AuraTheme.primary,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Song info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            song.displayTitle,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontSize: 14,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            song.displayArtist,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  fontSize: 12,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Prev
-                    IconButton(
-                      icon: const Icon(Icons.skip_previous_rounded),
-                      onPressed: () => audio.skipPrev(),
-                      iconSize: 22,
-                      color: AuraTheme.onSurface,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-
-                    const SizedBox(width: 4),
-
-                    // Play/Pause
-                    IconButton(
-                      icon: Icon(
-                        audio.isPlaying
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
-                      ),
-                      onPressed: () => audio.togglePlayPause(),
-                      iconSize: 30,
-                      color: AuraTheme.primary,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-
-                    const SizedBox(width: 4),
-
-                    // Next
-                    IconButton(
-                      icon: const Icon(Icons.skip_next_rounded),
-                      onPressed: () => audio.skipNext(),
-                      iconSize: 22,
-                      color: AuraTheme.onSurface,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-
-                    const SizedBox(width: 4),
-                  ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                AlbumArt(song: song, size: 46, borderRadius: 10),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(song.title,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text(song.artist,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+                IconButton(
+                  onPressed: player.previous,
+                  icon: const Icon(Icons.skip_previous_rounded),
+                  color: AppTheme.textSub,
+                  iconSize: 24,
+                ),
+                _PlayButton(player: player),
+                IconButton(
+                  onPressed: player.next,
+                  icon: const Icon(Icons.skip_next_rounded),
+                  color: AppTheme.textSub,
+                  iconSize: 24,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ProgressLine extends StatelessWidget {
-  final AudioProvider audio;
-  const _ProgressLine({required this.audio});
+class _PlayButton extends StatelessWidget {
+  final PlayerProvider player;
+  const _PlayButton({required this.player});
 
   @override
   Widget build(BuildContext context) {
-    final ratio = audio.duration.inMilliseconds > 0
-        ? (audio.position.inMilliseconds / audio.duration.inMilliseconds)
-            .clamp(0.0, 1.0)
-        : 0.0;
-
-    return LayoutBuilder(
-      builder: (_, constraints) => Container(
-        height: 2,
-        width: constraints.maxWidth * ratio,
+    return GestureDetector(
+      onTap: player.togglePlayPause,
+      child: Container(
+        width: 38,
+        height: 38,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AuraTheme.primary, AuraTheme.accent],
-          ),
+          color: AppTheme.teal,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          player.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          color: Colors.white,
+          size: 22,
         ),
       ),
     );

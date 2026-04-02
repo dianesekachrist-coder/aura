@@ -1,43 +1,28 @@
 workflows:
   android-release:
-    name: Aura Music - Android Release
+    name: Aura Music – Android Release
     max_build_duration: 60
     environment:
-      flutter: 3.22.0
+      flutter: 3.22.2 # pin to latest stable
       java: 17
-      android_signing:
-        - aura_music_keystore
-      vars:
-        PACKAGE_NAME: "com.example.aura_music"
-
     scripts:
-      - name: Get Flutter packages
+      - name: Get packages
         script: flutter pub get
-
-      - name: Run Flutter analyze
+      - name: Analyze
         script: flutter analyze --no-fatal-infos
-
-      - name: Build APK (debug)
+      - name: Unit tests
+        script: flutter test
+      - name: Build APK
         script: |
-          flutter build apk \
-            --debug \
-            --target-platform android-arm64 \
-            --dart-define=FLUTTER_BUILD_MODE=debug
-
-      - name: Build AAB (release)
-        script: |
-          flutter build appbundle \
-            --release \
-            --target-platform android-arm64
-
+          flutter build apk --release \
+            --dart-define=FLUTTER_BUILD_NAME=$PROJECT_BUILD_NUMBER \
+            --dart-define=FLUTTER_BUILD_NUMBER=$PROJECT_BUILD_NUMBER
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
-      - build/app/outputs/bundle/release/*.aab
-
+      - build/app/outputs/apk/release/*.apk
     publishing:
       email:
         recipients:
-          - dianesekachrist@gmail.com
+          - chris@example.com
         notify:
           success: true
           failure: true

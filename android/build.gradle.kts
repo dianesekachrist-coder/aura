@@ -1,33 +1,13 @@
-// ✅ Fichier build.gradle.kts au niveau PROJET (Kotlin DSL)
-buildscript {
-    val kotlinVersion by extra("1.9.22")
 
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.2.2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-    }
+plugins {
+    id("com.android.application") version "8.3.2" apply false
+    id("com.android.library") version "8.3.2" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.23" apply false
 }
 
+// Gradle 8+ modern syntax for build directory
 allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-// Redirection du dossier de build
-val buildDir: Directory = rootProject.layout.buildDirectory.get()
-subprojects {
-    project.layout.buildDirectory.set(buildDir.dir(project.name))
-}
-
-subprojects {
-    project.evaluationDependsOn(":app")
+    layout.buildDirectory.set(rootProject.layout.buildDirectory.dir(project.name))
 }
 
 tasks.register<Delete>("clean") {
