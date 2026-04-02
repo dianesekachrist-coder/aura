@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ✅ Couleurs natives Android pour le splash/launch screen -->
+    <color name="launch_background">#FF121218</color>
+    <color name="normal_background">#FF121218</color>
+    <color name="primary_color">#FFB388FF</color>
+</resources>
